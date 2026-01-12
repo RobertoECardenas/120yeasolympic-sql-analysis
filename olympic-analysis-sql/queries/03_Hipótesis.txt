@@ -1,0 +1,144 @@
+
+--Qr para ver los promedios de edades más bajos y altos junto al deporte practicado de atletas ganadores de medallas y el promedio general de atletas medallistas
+WITH promedio_min_medallistas AS (
+	SELECT 
+		ae.sport, 
+		AVG(ae.age) as promedio_edad_min_medallistas
+	FROM athlete_events ae 
+	WHERE ae.medal != "NA"
+	GROUP BY ae.sport
+	ORDER BY promedio_edad_min_medallistas
+	LIMIT 1),
+promedio_max_medallistas AS (
+	SELECT ae.sport, 
+	AVG(ae.age) as promedio_edad_max_medallistas
+	FROM athlete_events ae 
+	WHERE ae.medal != "NA"
+	GROUP BY ae.sport
+	ORDER BY promedio_edad_max_medallistas DESC
+	LIMIT 1),
+promedio_general_medallistas AS(
+	SELECT 
+		AVG(ae.age) as promedio_general_edad_medallistas
+	FROM athlete_events ae 
+	WHERE ae.medal != "NA"
+	),
+promedio_general_real AS (
+	SELECT 
+		AVG(ae.age) as promedio_general_edad
+	FROM athlete_events ae )
+SELECT * 
+FROM promedio_min_medallistas 
+JOIN promedio_max_medallistas 
+JOIN promedio_general_medallistas 
+JOIN promedio_general_real l;
+
+
+--Qr para encontrar la diferencia de edad promedio de quienes ganan medalla al total de participantes en cada deporte 
+WITH promedio AS (
+		SELECT aee.sport, 
+		AVG(aee.age) as promedio_edad_participantes
+	FROM athlete_events aee
+	GROUP BY aee.sport),
+promedio_general AS (
+	SELECT 
+		AVG(ae.age) as promedio_general_edad,
+		ae.Sport 
+	FROM athlete_events ae )
+SELECT 
+	ae.sport, 
+	AVG(ae.age) as promedio_edad_ganadores, 
+	COUNT(ae.ID) as recuento_medallas,
+	promedio.promedio_edad_participantes,
+	AVG(ae.age)-promedio_edad_participantes AS diferencia,
+	CASE 
+		WHEN (AVG(ae.age)-promedio_edad_participantes) <= 0 THEN "men"
+		WHEN (AVG(ae.age)-promedio_edad_participantes) > 0 THEN "mayores"
+	END AS quienes_ganan
+FROM athlete_events ae JOIN promedio ON ae.sport = promedio.sport
+WHERE ae.medal != "NA"
+GROUP BY ae.sport
+ORDER BY promedio.promedio_edad_participantes ;
+
+
+--QR deportes que el promedio de edad de ganadores superan el promedio edad participantes de ese deporte. PUNTO CLAVE 2
+WITH promedio AS (
+		SELECT 
+		aee.sport AS sport, 
+		AVG(aee.age) as promedio_edad_participantes
+	FROM athlete_events aee
+	GROUP BY aee.sport),
+	diferencia AS(
+SELECT 
+	AVG(ae.age) as promedio_edad_ganadores, 
+	promedio.promedio_edad_participantes,
+	AVG(ae.age)-promedio_edad_participantes AS diferencia,
+	ae.Sport 
+FROM athlete_events ae JOIN promedio ON ae.sport = promedio.sport 
+WHERE ae.medal != "NA"
+GROUP BY ae.sport
+HAVING diferencia > 0
+ORDER BY diferencia)
+SELECT 
+	COUNT(diferencia) AS mayores,
+	COUNT(promedio.sport) AS conteo_sports,
+	CAST((COUNT(diferencia)*100.0)/COUNT(promedio.sport)*100 AS INTEGER)/100.0 AS porcentaje_mayores
+FROM diferencia RIGHT JOIN promedio ON diferencia.Sport = promedio.sport
+
+
+--Qr para ver cuales son los paises con más participaciones de atletas en total
+WITH medallas AS (
+	SELECT 
+		COUNT(ae.medal) AS total_medallas, 
+		ae.NOC
+	FROM athlete_events ae 
+	WHERE ae.medal != "NA"
+	GROUP BY ae.noc)
+SELECT 
+	DISTINCT ae.noc, 
+	nr.region,
+	COUNT(*) as total_registros, 
+	COUNT(DISTINCT ae.Name) as numero_de_deportistas, 
+	medallas.total_medallas,
+	CAST(((medallas.total_medallas*100.0)/COUNT(*))*100 AS INTEGER)/100.0 AS porcentaje
+FROM athlete_events ae JOIN medallas ON ae.noc = medallas.noc JOIN noc_regions nr ON ae.NOC = nr.NOC 
+GROUP BY nr.region 
+ORDER BY medallas.total_medallas desc;
+
+
+--Qr total de medallas por región separando competencias de JO de verano e invierno, ordenado por el total general.
+WITH invierno AS (
+SELECT ae.noc, COUNT(*) AS total_participaciones
+FROM athlete_events ae 
+WHERE ae.Season = 'Winter'
+GROUP BY ae.NOC ),
+verano AS (
+SELECT ae.noc, COUNT(*) AS total_participaciones
+FROM athlete_events ae 
+WHERE ae.Season = 'Summer'
+GROUP BY ae.NOC)
+SELECT 
+	nr.NOC, 
+	nr.region, 
+	invierno.total_participaciones AS total_invierno , 
+	verano.total_participaciones AS total_verano,
+	(invierno.total_participaciones + verano.total_participaciones ) AS total_todo
+FROM invierno 
+	JOIN verano 
+	ON invierno.noc = verano.noc 
+	JOIN noc_regions nr 
+	on invierno.noc = nr.NOC 
+GROUP BY nr.region 
+ORDER BY total_todo DESC;
+
+
+--CORRELACION mientra más deportes hayan en esa edición de JO más participantes hay
+WITH metallas AS (SELECT ae.year, COUNT(ae.Medal) as medallas
+FROM athlete_events ae 
+WHERE ae.Medal != 'NA' AND ae.Season = 'Summer' AND ae.NOC = 'USA'
+GROUP BY ae."Year")
+SELECT ae.year, COUNT(ae.ID), COUNT(DISTINCT(ae.Sport)), metallas.medallas
+FROM athlete_events ae INNER JOIN metallas ON ae."Year" = metallas."year" 
+WHERE ae.Season = "Summer" AND ae.NOC = 'USA' 
+GROUP BY ae."Year"
+ORDER BY ae."year" ;

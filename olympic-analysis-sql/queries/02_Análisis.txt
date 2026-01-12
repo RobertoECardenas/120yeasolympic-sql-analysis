@@ -1,0 +1,69 @@
+
+--Qr para contar el total de metallas que tiene cada país en todo el conjunto de datos
+SELECT ae.NOC, COUNT(ae.Medal) AS total, nr.region 
+FROM athlete_events ae 
+JOIN noc_regions nr 
+ON ae.NOC = nr.NOC 
+WHERE Medal != "NA"
+GROUP BY ae.NOC
+ORDER BY total DESC;
+
+
+--Qr para agrupar por deporte el promedio de las edades de los deportistas que han ganado medallas olímpicas
+SELECT ae.sport, COUNT(ae.medal) as total_medallas, AVG(ae.age)
+FROM athlete_events ae 
+WHERE ae.medal != "NA"
+GROUP BY ae.sport
+ORDER BY ae.sport;
+
+SELECT * FROM athlete_events ae WHERE ae.Sport = "Aeronautics";
+--NOTA: en la categoría de Aeronautica solo ha habido un ganador olimpico en todos los tiempos y fue un ganador por mérito
+
+
+SELECT ae.Sport, COUNT(*)
+FROM athlete_events ae 
+WHERE year >= 2010
+GROUP BY ae.Sport ;
+
+SELECT * FROM athlete_events ae WHERE ae.Sport = "Basque Pelota" OR ae.sport = "Basketball" ORDER BY ae.Year
+
+
+--Qr para conocer los promedios de edad de los participantes en cada deporte
+SELECT ae.sport, AVG(ae.age) as promedio_edad_participantes
+FROM athlete_events ae
+GROUP BY ae.sport;
+
+
+--Qr para conocer total de metallas por regiones
+SELECT ae.NOC, COUNT(ae.Medal) AS total, nr.region 
+FROM athlete_events ae 
+JOIN noc_regions nr 
+ON ae.NOC = nr.NOC 
+WHERE Medal != "NA"
+GROUP BY ae.NOC
+ORDER BY total DESC;
+
+SELECT DISTINCT ae.sport 
+FROM athlete_events ae ;
+
+
+--Qr contador de participaciones por cada región
+SELECT nr.region, count(*) AS total
+FROM athlete_events ae JOIN noc_regions nr ON ae.NOC = nr.NOC 
+GROUP BY nr.region 
+ORDER BY total DESC;
+
+
+--Qr contador de medalladas por región
+SELECT ae.noc, nr.region, COUNT(ae.medal) AS medallas
+FROM athlete_events ae JOIN noc_regions nr ON ae.noc = nr.noc
+WHERE year >= '2000' AND medal != 'NA'
+GROUP BY nr.region 
+ORDER BY medallas DESC;
+
+
+--Qr mostrando dato curioso: en estos JO la región de USA mandó una cantidad brutal de participantes a competir.
+SELECT nr.region, COUNT(DISTINCT(id)) as atletas
+FROM athlete_events ae JOIN noc_regions nr ON ae.noc = nr.NOC 
+WHERE year = 1904
+GROUP BY nr.region

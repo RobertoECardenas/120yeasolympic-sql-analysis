@@ -1,0 +1,41 @@
+
+--Qr para conocer columnas que conforman las tablas
+SELECT *
+FROM athlete_events ae
+LIMIT 10;
+
+SELECT *
+FROM noc_regions nr 
+LIMIT 10;
+
+--Qr para encontrar las disciplinas deportivas con más medallas en categorias de sexo femenino
+SELECT ae.NOC, nr.region, ae.sex, ae.Sport/*, ae.Medal*/, COUNT(ae.medal) as total_medals
+FROM athlete_events ae JOIN noc_regions nr ON ae.NOC = nr.NOC 
+Where ae.medal != "NA" AND ae.sex = "F"
+GROUP BY  nr.region , ae.sport--, ae.medal
+ORDER BY total_medals DESC;
+--NOTA: USA forma el TOP 5 de disciplinas deportivas con más medallas en categoría del sexo femenino
+
+
+SELECT ae.name, ae.sex, ae.age, ae.NOC, ae.Sport, ae.Medal 
+FROM athlete_events ae 
+Where ae.medal != "NA" AND ae.sex = "F"
+ORDER BY ae.Sport, ae.NOC, medal;
+
+
+SELECT ae.year, COUNT(ae.Medal) as medallas
+FROM athlete_events ae 
+WHERE ae.Medal != 'NA' AND ae.Season = 'Summer' AND ae.NOC = 'USA'
+GROUP BY ae.Year ;
+
+
+SELECT ae.Sport, COUNT(DISTINCT(ae.games)) as cantidad_competiciones
+FROM athlete_events ae
+GROUP BY ae.sport;
+
+
+SELECT ae.NOC, COUNT(DISTINCT(ae.year)) as count_year, ae.year
+FROM athlete_events ae 
+WHERE ae.noc = "USA"
+GROUP BY ae.year
+ORDER BY ae.year;
